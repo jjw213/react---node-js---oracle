@@ -5,6 +5,8 @@
 ## 테스트 계획 관리
 - GET `/api/test-plans` - 테스트 계획 목록 조회
 - POST `/api/test-plans` - 테스트 계획 생성
+- PUT `/api/test-plans/:id` - 테스트 계획 수정
+- DELETE `/api/test-plans/:id` - 테스트 계획 삭제
 
 ## 테스트 실행 관리
 - GET `/api/test-executions` - 테스트 실행 결과 조회

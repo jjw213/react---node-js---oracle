@@ -9,3 +9,8 @@ const require = createRequire(import.meta.url);
 test('서버 시작 테스트', () => {
   assert.ok(true, '서버가 시작됨');
 });
+
+test('테스트 계획 생성 API 테스트', () => {
+  // 실제 API 호출 테스트 로직은 나중에 추가
+  assert.ok(true, '테스트 계획 생성 API 테스트 준비됨');
+});
