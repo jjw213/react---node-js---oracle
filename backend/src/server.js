@@ -150,6 +150,52 @@ app.get('/api/test-executions', async (req, res) => {
   }
 });
 
+// 테스트 실행 요청
+app.post('/api/test-executions', async (req, res) => {
+  let connection;
+  try {
+    const { plan_id } = req.body;
+    connection = await oracledb.getConnection(dbConfig);
+    
+    // 새로운 실행 기록 생성
+    const insertResult = await connection.execute(
+      'INSERT INTO test_executions (plan_id, status) VALUES (:plan_id, :status) RETURNING id INTO :id',
+      [plan_id, 'RUNNING'],
+      { autoCommit: true, outBind: true }
+    );
+    
+    const executionId = insertResult.outBinds.id[0];
+    
+    // 여기서 실제 API 테스트 실행 로직을 구현
+    // 현재는 가상의 결과를 반환
+    const resultData = {
+      execution_id: executionId,
+      status: 'SUCCESS',
+      logs: ['테스트 실행 시작', 'API 요청 전송', '응답 수신', '테스트 완료']
+    };
+    
+    // 결과 업데이트
+    await connection.execute(
+      'UPDATE test_executions SET status = :status, result_data = :result_data WHERE id = :id',
+      [resultData.status, JSON.stringify(resultData), executionId],
+      { autoCommit: true }
+    );
+    
+    res.status(201).json({ id: executionId, ...resultData });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Database error' });
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
+});
+
 // 서버 시작
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

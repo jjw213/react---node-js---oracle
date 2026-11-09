@@ -6,6 +6,7 @@
 - 프로젝트 구조 설정 (Node.js + Express, React + Vite, Oracle Database Free)
 - 초기 API 명세 정의 (API.md)
 - 테스트 계획 관리 도메인 구현 (생성, 조회, 수정, 삭제)
+- API 자동 테스트 실행 시스템 구현 (실행 요청, 결과 저장, 상태 및 로그 관리)
 
 ## 실행 방법
 
