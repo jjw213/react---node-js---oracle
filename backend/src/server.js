@@ -181,7 +181,47 @@ app.post('/api/test-executions', async (req, res) => {
       { autoCommit: true }
     );
     
+    // 코드 커버리지 데이터 삽입 (가상)
+    const coverageData = [
+      { file_path: '/src/api/users.js', covered_lines: 85, total_lines: 100, coverage_percentage: 85.00 },
+      { file_path: '/src/api/auth.js', covered_lines: 60, total_lines: 75, coverage_percentage: 80.00 }
+    ];
+    
+    for (const data of coverageData) {
+      await connection.execute(
+        'INSERT INTO code_coverage (execution_id, file_path, covered_lines, total_lines, coverage_percentage) VALUES (:execution_id, :file_path, :covered_lines, :total_lines, :coverage_percentage)',
+        [executionId, data.file_path, data.covered_lines, data.total_lines, data.coverage_percentage],
+        { autoCommit: true }
+      );
+    }
+    
     res.status(201).json({ id: executionId, ...resultData });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Database error' });
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
+});
+
+// 코드 커버리지 조회
+app.get('/api/code-coverage', async (req, res) => {
+  let connection;
+  try {
+    connection = await oracledb.getConnection(dbConfig);
+    const result = await connection.execute(
+      'SELECT execution_id, file_path, covered_lines, total_lines, coverage_percentage FROM code_coverage ORDER BY execution_id',
+      [],
+      { resultSet: true }
+    );
+    const rows = await result.resultSet.getRows();
+    res.json(rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Database error' });
