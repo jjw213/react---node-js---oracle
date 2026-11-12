@@ -195,6 +195,21 @@ app.post('/api/test-executions', async (req, res) => {
       );
     }
     
+    // 성능 지표 데이터 삽입 (가상)
+    const performanceData = [
+      { metric_name: 'response_time_ms', value: 250, unit: 'ms' },
+      { metric_name: 'cpu_usage_percent', value: 45.5, unit: '%' },
+      { metric_name: 'memory_usage_mb', value: 128.7, unit: 'MB' }
+    ];
+    
+    for (const data of performanceData) {
+      await connection.execute(
+        'INSERT INTO performance_metrics (execution_id, metric_name, value, unit) VALUES (:execution_id, :metric_name, :value, :unit)',
+        [executionId, data.metric_name, data.value, data.unit],
+        { autoCommit: true }
+      );
+    }
+    
     res.status(201).json({ id: executionId, ...resultData });
   } catch (err) {
     console.error(err);
@@ -222,6 +237,58 @@ app.get('/api/code-coverage', async (req, res) => {
     );
     const rows = await result.resultSet.getRows();
     res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Database error' });
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
+});
+
+// 성능 지표 조회
+app.get('/api/performance-metrics', async (req, res) => {
+  let connection;
+  try {
+    connection = await oracledb.getConnection(dbConfig);
+    const result = await connection.execute(
+      'SELECT id, execution_id, metric_name, value, unit, recorded_at FROM performance_metrics ORDER BY recorded_at DESC',
+      [],
+      { resultSet: true }
+    );
+    const rows = await result.resultSet.getRows();
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Database error' });
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
+});
+
+// 성능 지표 저장
+app.post('/api/performance-metrics', async (req, res) => {
+  let connection;
+  try {
+    const { execution_id, metric_name, value, unit } = req.body;
+    connection = await oracledb.getConnection(dbConfig);
+    const result = await connection.execute(
+      'INSERT INTO performance_metrics (execution_id, metric_name, value, unit) VALUES (:execution_id, :metric_name, :value, :unit) RETURNING id INTO :id',
+      [execution_id, metric_name, value, unit],
+      { autoCommit: true, outBind: true }
+    );
+    res.status(201).json({ id: result.outBinds.id[0] });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Database error' });

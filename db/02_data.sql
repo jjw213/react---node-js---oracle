@@ -13,5 +13,9 @@ VALUES (1, '/src/api/users.js', 85, 100, 85.00);
 -- 성능 지표 데이터
 INSERT INTO performance_metrics (execution_id, metric_name, value, unit)
 VALUES (1, 'response_time_ms', 250, 'ms');
+INSERT INTO performance_metrics (execution_id, metric_name, value, unit)
+VALUES (1, 'cpu_usage_percent', 45.5, '%');
+INSERT INTO performance_metrics (execution_id, metric_name, value, unit)
+VALUES (1, 'memory_usage_mb', 128.7, 'MB');
 
 COMMIT;

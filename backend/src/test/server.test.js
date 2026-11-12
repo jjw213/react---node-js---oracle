@@ -24,3 +24,13 @@ test('코드 커버리지 조회 API 테스트', async () => {
   // 실제 API 호출 테스트 로직은 나중에 추가
   assert.ok(true, '코드 커버리지 조회 API 테스트 준비됨');
 });
+
+test('성능 지표 조회 API 테스트', async () => {
+  // 실제 API 호출 테스트 로직은 나중에 추가
+  assert.ok(true, '성능 지표 조회 API 테스트 준비됨');
+});
+
+test('성능 지표 저장 API 테스트', async () => {
+  // 실제 API 호출 테스트 로직은 나중에 추가
+  assert.ok(true, '성능 지표 저장 API 테스트 준비됨');
+});

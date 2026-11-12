@@ -17,6 +17,7 @@
 
 ## 성능 지표
 - GET `/api/performance-metrics` - 성능 지표 조회
+- POST `/api/performance-metrics` - 성능 지표 저장
 
 ## 대시보드
 - GET `/api/dashboard` - 통합 대시보드 데이터 조회
