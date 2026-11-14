@@ -303,6 +303,64 @@ app.post('/api/performance-metrics', async (req, res) => {
   }
 });
 
+// 통합 대시보드 데이터 조회
+app.get('/api/dashboard', async (req, res) => {
+  let connection;
+  try {
+    connection = await oracledb.getConnection(dbConfig);
+    
+    // 테스트 실행 결과 요약
+    const executionSummaryResult = await connection.execute(
+      "SELECT status, COUNT(*) as count FROM test_executions GROUP BY status",
+      [],
+      { resultSet: true }
+    );
+    const executionSummary = await executionSummaryResult.resultSet.getRows();
+    
+    // 코드 커버리지 요약
+    const coverageSummaryResult = await connection.execute(
+      "SELECT AVG(coverage_percentage) as avg_coverage, COUNT(*) as file_count FROM code_coverage",
+      [],
+      { resultSet: true }
+    );
+    const coverageSummary = await coverageSummaryResult.resultSet.getRows();
+    
+    // 성능 지표 요약
+    const performanceSummaryResult = await connection.execute(
+      "SELECT metric_name, AVG(value) as avg_value, unit FROM performance_metrics GROUP BY metric_name, unit",
+      [],
+      { resultSet: true }
+    );
+    const performanceSummary = await performanceSummaryResult.resultSet.getRows();
+    
+    // 최근 테스트 실행
+    const recentExecutionsResult = await connection.execute(
+      "SELECT id, plan_id, status, executed_at FROM test_executions ORDER BY executed_at DESC FETCH FIRST 5 ROWS ONLY",
+      [],
+      { resultSet: true }
+    );
+    const recentExecutions = await recentExecutionsResult.resultSet.getRows();
+    
+    res.json({
+      executionSummary,
+      coverageSummary: coverageSummary[0],
+      performanceSummary,
+      recentExecutions
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Database error' });
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
+});
+
 // 서버 시작
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
