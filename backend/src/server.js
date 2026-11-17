@@ -210,6 +210,12 @@ app.post('/api/test-executions', async (req, res) => {
       );
     }
     
+    // 알림 기능 추가: 실패 시 알림 전송
+    if (resultData.status === 'FAILED') {
+      console.log('테스트 실패 알림 전송');
+      // 실제 알림 로직은 여기에 구현
+    }
+    
     res.status(201).json({ id: executionId, ...resultData });
   } catch (err) {
     console.error(err);
@@ -347,6 +353,35 @@ app.get('/api/dashboard', async (req, res) => {
       performanceSummary,
       recentExecutions
     });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Database error' });
+  } finally {
+    if (connection) {
+      try {
+        await connection.close();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
+});
+
+// 알림 설정 저장
+app.post('/api/notifications', async (req, res) => {
+  let connection;
+  try {
+    const { event_type, notification_type, target } = req.body;
+    connection = await oracledb.getConnection(dbConfig);
+    
+    // 알림 설정 저장
+    const result = await connection.execute(
+      'INSERT INTO notifications (event_type, notification_type, target) VALUES (:event_type, :notification_type, :target) RETURNING id INTO :id',
+      [event_type, notification_type, target],
+      { autoCommit: true, outBind: true }
+    );
+    
+    res.status(201).json({ id: result.outBinds.id[0] });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Database error' });

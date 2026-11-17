@@ -24,8 +24,4 @@
 
 ## 알림 설정
 - POST `/api/notifications` - 알림 설정 저장
-
-## 사용자 관리
-- GET `/api/users` - 사용자 정보 조회
-- PUT `/api/users` - 사용자 정보 수정
-- DELETE `/api/users` - 사용자 삭제
+- GET `/api/notifications` - 알림 설정 조회
