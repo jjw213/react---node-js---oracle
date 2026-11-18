@@ -14,13 +14,43 @@ const dbConfig = {
   connectString: process.env.ORACLE_DSN || 'localhost:1521/FREEPDB1'
 };
 
+// 인증 미들웨어
+const authenticate = async (req, res, next) => {
+  // 토큰이 있는지 확인 (실제 구현은 JWT 등으로 대체)
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ error: '인증이 필요합니다.' });
+  }
+  
+  // 토큰 유효성 검사 (예시로 하드코딩된 값 사용)
+  if (token !== 'valid-token') {
+    return res.status(403).json({ error: '유효하지 않은 인증입니다.' });
+  }
+  
+  next();
+};
+
+// 사용자 권한 미들웨어
+const authorize = (roles = []) => {
+  return async (req, res, next) => {
+    // 실제 구현에서는 토큰에서 사용자 정보를 추출하고 권한을 확인해야 함
+    const userRole = 'admin'; // 예시로 고정된 역할 사용
+    
+    if (!roles.includes(userRole)) {
+      return res.status(403).json({ error: '접근 권한이 없습니다.' });
+    }
+    
+    next();
+  };
+};
+
 // 기본 라우트
 app.get('/', (req, res) => {
   res.json({ message: 'Test Automation Dashboard API' });
 });
 
-// 테스트 계획 목록 조회
-app.get('/api/test-plans', async (req, res) => {
+// 테스트 계획 목록 조회 - 인증 필요
+app.get('/api/test-plans', authenticate, async (req, res) => {
   let connection;
   try {
     connection = await oracledb.getConnection(dbConfig);
@@ -45,8 +75,8 @@ app.get('/api/test-plans', async (req, res) => {
   }
 });
 
-// 테스트 계획 생성
-app.post('/api/test-plans', async (req, res) => {
+// 테스트 계획 생성 - 인증 및 권한 필요
+app.post('/api/test-plans', authenticate, authorize(['admin', 'user']), async (req, res) => {
   let connection;
   try {
     const { name, description } = req.body;
@@ -71,8 +101,8 @@ app.post('/api/test-plans', async (req, res) => {
   }
 });
 
-// 테스트 계획 수정
-app.put('/api/test-plans/:id', async (req, res) => {
+// 테스트 계획 수정 - 인증 및 권한 필요
+app.put('/api/test-plans/:id', authenticate, authorize(['admin', 'user']), async (req, res) => {
   let connection;
   try {
     const id = req.params.id;
@@ -98,8 +128,8 @@ app.put('/api/test-plans/:id', async (req, res) => {
   }
 });
 
-// 테스트 계획 삭제
-app.delete('/api/test-plans/:id', async (req, res) => {
+// 테스트 계획 삭제 - 인증 및 권한 필요
+app.delete('/api/test-plans/:id', authenticate, authorize(['admin']), async (req, res) => {
   let connection;
   try {
     const id = req.params.id;
@@ -124,8 +154,8 @@ app.delete('/api/test-plans/:id', async (req, res) => {
   }
 });
 
-// 테스트 실행 결과 조회
-app.get('/api/test-executions', async (req, res) => {
+// 테스트 실행 결과 조회 - 인증 필요
+app.get('/api/test-executions', authenticate, async (req, res) => {
   let connection;
   try {
     connection = await oracledb.getConnection(dbConfig);
@@ -150,8 +180,8 @@ app.get('/api/test-executions', async (req, res) => {
   }
 });
 
-// 테스트 실행 요청
-app.post('/api/test-executions', async (req, res) => {
+// 테스트 실행 요청 - 인증 필요
+app.post('/api/test-executions', authenticate, async (req, res) => {
   let connection;
   try {
     const { plan_id } = req.body;
@@ -231,8 +261,8 @@ app.post('/api/test-executions', async (req, res) => {
   }
 });
 
-// 코드 커버리지 조회
-app.get('/api/code-coverage', async (req, res) => {
+// 코드 커버리지 조회 - 인증 필요
+app.get('/api/code-coverage', authenticate, async (req, res) => {
   let connection;
   try {
     connection = await oracledb.getConnection(dbConfig);
@@ -257,8 +287,8 @@ app.get('/api/code-coverage', async (req, res) => {
   }
 });
 
-// 성능 지표 조회
-app.get('/api/performance-metrics', async (req, res) => {
+// 성능 지표 조회 - 인증 필요
+app.get('/api/performance-metrics', authenticate, async (req, res) => {
   let connection;
   try {
     connection = await oracledb.getConnection(dbConfig);
@@ -283,8 +313,8 @@ app.get('/api/performance-metrics', async (req, res) => {
   }
 });
 
-// 성능 지표 저장
-app.post('/api/performance-metrics', async (req, res) => {
+// 성능 지표 저장 - 인증 필요
+app.post('/api/performance-metrics', authenticate, async (req, res) => {
   let connection;
   try {
     const { execution_id, metric_name, value, unit } = req.body;
@@ -309,8 +339,8 @@ app.post('/api/performance-metrics', async (req, res) => {
   }
 });
 
-// 통합 대시보드 데이터 조회
-app.get('/api/dashboard', async (req, res) => {
+// 통합 대시보드 데이터 조회 - 인증 필요
+app.get('/api/dashboard', authenticate, async (req, res) => {
   let connection;
   try {
     connection = await oracledb.getConnection(dbConfig);
@@ -367,8 +397,8 @@ app.get('/api/dashboard', async (req, res) => {
   }
 });
 
-// 알림 설정 저장
-app.post('/api/notifications', async (req, res) => {
+// 알림 설정 저장 - 인증 및 권한 필요
+app.post('/api/notifications', authenticate, authorize(['admin']), async (req, res) => {
   let connection;
   try {
     const { event_type, notification_type, target } = req.body;
